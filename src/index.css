@@ -1,5 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --accent: 0 230 118; /* neon green by default; switched at runtime */
+  --accent: 0 230 118;
 }
 
 * {
@@ -14,12 +18,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Persian: Vazirmatn first — excellent Persian + Latin glyphs */
 html[lang='fa'] body {
   font-family: Vazirmatn, Inter, system-ui, -apple-system, sans-serif;
 }
 
-/* hide number input spinners for a clean industrial look */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -34,7 +36,6 @@ input[type='number'] {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 99px; }
 
-/* ---- scanner FX ---- */
 .scan-grid {
   background-image:
     linear-gradient(rgb(var(--accent) / 0.16) 1px, transparent 1px),
