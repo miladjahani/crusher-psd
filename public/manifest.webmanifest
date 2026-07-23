@@ -1,7 +1,7 @@
 {
   "name": "Crusher PSD Analysis",
   "short_name": "CrusherPSD",
-  "description": "Industrial Particle Size Distribution Analysis — Visual AI & Manual Sieve modes. Bilingual EN/FA.",
+  "description": "Industrial Particle Size Distribution Analysis — bilingual EN/FA.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -10,12 +10,5 @@
   "theme_color": "#070b10",
   "dir": "auto",
   "lang": "en",
-  "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ]
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }

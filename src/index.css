@@ -2,70 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --accent: 0 230 118;
-}
-
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
+:root { --accent: 0 230 118; }
+* { -webkit-tap-highlight-color: transparent; }
 body {
-  margin: 0;
-  background: #070b10;
-  color: #f1f3f7;
+  margin: 0; background: #070b10; color: #f1f3f7;
   font-family: Inter, Vazirmatn, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-
-html[lang='fa'] body {
-  font-family: Vazirmatn, Inter, system-ui, -apple-system, sans-serif;
-}
-
+html[lang='fa'] body { font-family: Vazirmatn, Inter, system-ui, -apple-system, sans-serif; }
 input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 ::selection { background: rgb(var(--accent) / 0.35); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 99px; }
-
-.scan-grid {
-  background-image:
-    linear-gradient(rgb(var(--accent) / 0.16) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--accent) / 0.16) 1px, transparent 1px);
-  background-size: 30px 30px;
-}
-.scan-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 5%;
-  height: 3px;
-  border-radius: 99px;
-  background: rgb(var(--accent));
-  box-shadow: 0 0 20px 5px rgb(var(--accent) / 0.55);
-  animation: scanY 2.4s ease-in-out infinite;
-}
-@keyframes scanY {
-  0%, 100% { top: 5%; }
-  50% { top: 93%; }
-}
-
-.scan-btn {
-  background-color: rgb(var(--accent));
-  background-image: linear-gradient(135deg, rgb(var(--accent)), color-mix(in srgb, rgb(var(--accent)) 70%, white));
-  box-shadow: 0 0 30px rgb(var(--accent) / 0.5);
-}
-
-.fade-up { animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 99px; }
+.fade-up { animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }

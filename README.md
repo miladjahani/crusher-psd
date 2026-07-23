@@ -1,24 +1,11 @@
 # Crusher PSD Analysis PWA
 
-Bilingual English/Persian industrial Particle Size Distribution Analysis PWA.
+Bilingual EN/FA industrial Particle Size Distribution Analysis PWA.
 
-## Local Development
-
+## Local
 npm install
 npm run dev
 
-## Build
-
-npm run build
-
 ## Deploy
-
-This repository includes a GitHub Actions workflow:
-
-.github/workflows/deploy.yml
-
-After pushing, go to:
-
-Settings > Pages
-
-Set Pages source to: GitHub Actions
+GitHub Actions at .github/workflows/deploy.yml
+Settings > Pages > Source: GitHub Actions
