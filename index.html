@@ -1,21 +1,289 @@
 <!doctype html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#070b10" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <title>Crusher PSD Analysis</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.tsx"></script>
-  </body>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI-to-GitHub Smart PWA Deployer</title>
+  <meta name="theme-color" content="#070b10" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root { color-scheme: dark; --primary: #00e676; --bg: #070b10; --card: rgba(255,255,255,.05); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: #f1f3f7; font-family: system-ui, -apple-system, sans-serif; padding: 16px; }
+    .app { max-width: 900px; margin: 0 auto; background: var(--card); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 20px; backdrop-filter: blur(16px); }
+    h1 { font-size: 20px; margin: 0 0 8px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    p { color: #b7c0cc; font-size: 13.5px; line-height: 1.6; margin-top: 0; }
+    label { display: block; margin: 12px 0 6px; font-weight: bold; font-size: 13px; color: #e2e8f0; }
+    input[type="text"], input[type="password"], select, textarea { width: 100%; background: #0b0f14; color: #e8edf4; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px 12px; font-family: monospace; font-size: 13px; }
+    textarea { height: 180px; resize: vertical; direction: ltr; text-align: left; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+    .btn { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: bold; cursor: pointer; background: var(--primary); color: #071009; font-size: 14px; transition: .15s; }
+    .btn:active { transform: scale(.98); }
+    .btn.secondary { background: rgba(255,255,255,.08); color: #e2e8f0; border: 1px solid rgba(255,255,255,.15); }
+    .btn.danger { background: rgba(255,80,80,.2); color: #ff9999; border: 1px solid rgba(255,80,80,.3); }
+    
+    .tree-container { margin-top: 16px; background: #040609; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 12px; max-height: 350px; overflow-y: auto; }
+    .tree-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,.04); font-family: monospace; font-size: 12px; direction: ltr; text-align: left; }
+    .tree-item:last-child { border-bottom: none; }
+    .tree-path { color: #7df0b4; font-weight: bold; word-break: break-all; }
+    .tree-size { color: #718096; margin-left: 8px; font-size: 11px; }
+    .tree-actions { display: flex; gap: 6px; }
+
+    #log { margin-top: 16px; padding: 12px; background: #000; border-radius: 10px; color: #00e676; font-family: monospace; font-size: 11.5px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; direction: ltr; text-align: left; }
+    .engine-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+    .engine-btn { flex: 1; padding: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: #a0aec0; border-radius: 10px; font-size: 12px; cursor: pointer; text-align: center; }
+    .engine-btn.active { background: rgba(0,230,118,.15); border-color: var(--primary); color: var(--primary); font-weight: bold; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>🚀 AI-to-GitHub Deployer <span style="font-size:12px; color:#a0aec0;">v7.0 PWA</span></h1>
+    <p>متن کامل پاسخ چت‌بات (Gemini, Qwen, ChatGPT...) را وارد کنید؛ برنامه به‌صورت گرافیکی فایل‌ها را استخراج کرده و روی <b>GitHub Pages</b> دپلوی می‌کند.</p>
+
+    <label>موتور پارسر (تشخیص هوشمند):</label>
+    <div class="engine-selector">
+      <div class="engine-btn active" id="engAuto" onclick="setEngine('auto')">⚡️ عمومی / خودکار</div>
+      <div class="engine-btn" id="engGemini" onclick="setEngine('gemini')">✨ Gemini / Claude</div>
+      <div class="engine-btn" id="engQwen" onclick="setEngine('qwen')">🌐 Qwen / DeepSeek</div>
+    </div>
+
+    <div class="row">
+      <div style="flex:1;">
+        <label for="token">GitHub Token (PAT)</label>
+        <input id="token" type="password" placeholder="ghp_..." autocomplete="off" />
+      </div>
+      <div style="flex:1;">
+        <label for="repo">نام ریپوزیتوری (Repo)</label>
+        <input id="repo" type="text" value="my-pwa-app" />
+      </div>
+    </div>
+
+    <div class="row">
+      <label style="margin:0; font-weight:normal;"><input id="privateRepo" type="checkbox" /> Private Repo</label>
+      <label style="margin:0; font-weight:normal;"><input id="autoCreate" type="checkbox" checked /> ساخت ریپو در صورت عدم وجود</label>
+    </div>
+
+    <label for="chatInput">متن کامل چت‌بات را اینجا پیست کنید:</label>
+    <textarea id="chatInput" placeholder="کل متن شامل توضیحات و فایل‌های کد را اینجا Paste کنید..."></textarea>
+    
+    <div class="row">
+      <button class="btn secondary" onclick="readClipboard()">📋 خواندن از حافظه (Clipboard)</button>
+      <button class="btn secondary" onclick="parseText()">🔍 پردازش و استخراج فایل‌ها</button>
+    </div>
+
+    <div id="explorerSection" style="display:none; margin-top:16px;">
+      <label>📁 پیش‌نمایش گرافیکی فایل‌های شناسایی شده (<span id="fileCount">0</span> فایل):</label>
+      <div class="tree-container" id="treeView"></div>
+    </div>
+
+    <button class="btn" id="btnDeploy" onclick="deployToGitHub()" style="width:100%; margin-top:16px; padding:14px;">🚀 دپلوی مستقیم در GitHub Pages</button>
+
+    <pre id="log">آماده به‌کار. متن چت‌بات را پیست کرده و دکمه پردازش را بزنید.</pre>
+  </main>
+
+  <script>
+    let extractedFiles = {};
+    let selectedEngine = 'auto';
+
+    function setEngine(e) {
+      selectedEngine = e;
+      document.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('eng' + e.charAt(0).toUpperCase() + e.slice(1)).classList.add('active');
+    }
+
+    function log(msg) { document.getElementById('log').textContent = msg; }
+
+    async function readClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('chatInput').value = text;
+        log("متن با موفقیت از حافظه خوانده شد.");
+        parseText();
+      } catch (err) {
+        log("خطا در خواندن Clipboard: " + err.message + "\nلطفاً دستی با Ctrl+V پیست کنید.");
+      }
+    }
+
+    function parseText() {
+      const raw = document.getElementById('chatInput').value;
+      if (!raw.trim()) { log("متن ورودی خالی است!"); return; }
+
+      extractedFiles = {};
+      const lines = raw.split(/\r?\n/);
+      let currentPath = null;
+      let inCode = false;
+      let codeBuffer = [];
+
+      const pathHeaderRegex = /(?:##|###|\*\*)\s*(?:📄|📁)?\s*`?([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+)`?/;
+      const codeBlockStart = /^```([a-zA-Z0-9_\-]+)?/;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        const headerMatch = line.match(pathHeaderRegex);
+        if (headerMatch && !inCode) {
+          currentPath = headerMatch[1].replace(/^\.\//, '');
+          continue;
+        }
+
+        if (line.startsWith('```')) {
+          if (!inCode) {
+            inCode = true;
+            codeBuffer = [];
+            const inlinePath = line.match(/```\w+\s+([a-zA-Z0-9_\-\.\/]+\.[a-zA-Z0-9]+)/);
+            if (inlinePath) currentPath = inlinePath[1];
+          } else {
+            inCode = false;
+            if (currentPath) {
+              extractedFiles[currentPath] = codeBuffer.join('\n');
+            }
+            currentPath = null;
+          }
+          continue;
+        }
+
+        if (inCode) codeBuffer.push(line);
+      }
+      renderTree();
+    }
+
+    function renderTree() {
+      const treeView = document.getElementById('treeView');
+      const keys = Object.keys(extractedFiles);
+      document.getElementById('fileCount').textContent = keys.length;
+      
+      if (keys.length === 0) {
+        treeView.innerHTML = '<div style="color:#a0aec0; text-align:center;">هیچ فایلی یافت نشد. ساختار متن چت‌بات را بررسی کنید.</div>';
+        document.getElementById('explorerSection').style.display = 'block';
+        return;
+      }
+
+      let html = '';
+      keys.forEach(path => {
+        const size = (new Blob([extractedFiles[path]]).size / 1024).toFixed(1);
+        html += `
+          <div class="tree-item">
+            <div>
+              <span class="tree-path">📄 ${path}</span>
+              <span class="tree-size">(${size} KB)</span>
+            </div>
+            <div class="tree-actions">
+              <button class="btn danger" style="padding:2px 8px; font-size:10px;" onclick="deleteFile('${path}')">حذف</button>
+            </div>
+          </div>
+        `;
+      });
+
+      treeView.innerHTML = html;
+      document.getElementById('explorerSection').style.display = 'block';
+      log(`تعداد ${keys.length} فایل با موفقیت شناسایی شد.`);
+    }
+
+    function deleteFile(path) {
+      delete extractedFiles[path];
+      renderTree();
+    }
+
+    async function ghApi(path, token, method = 'GET', body = null) {
+      const res = await fetch('[https://api.github.com](https://api.github.com)' + path, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : null
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        throw new Error(err.message || 'خطای API گیت‌هاب');
+      }
+      return res.json();
+    }
+
+    async function deployToGitHub() {
+      const token = document.getElementById('token').value.trim();
+      const repo = document.getElementById('repo').value.trim();
+      const isPrivate = document.getElementById('privateRepo').checked;
+
+      if (!token || !repo) { log("لطفاً توکن و نام ریپوزیتوری را وارد کنید."); return; }
+      if (Object.keys(extractedFiles).length === 0) { log("هیچ فایلی برای دپلوی وجود ندارد!"); return; }
+      if (!extractedFiles['index.html']) {
+        if (!confirm("هشدار: فایل index.html یافت نشد! بدون این فایل GitHub Pages اجرا نمی‌شود. ادامه می‌دهید؟")) return;
+      }
+
+      const btn = document.getElementById('btnDeploy');
+      btn.disabled = true;
+
+      try {
+        log("در حال احراز هویت و بررسی ریپوزیتوری...");
+        const user = await ghApi('/user', token);
+        const owner = user.login;
+
+        try {
+          await ghApi(`/repos/${owner}/${repo}`, token);
+        } catch (e) {
+          if (document.getElementById('autoCreate').checked) {
+            log("ریپوزیتوری یافت نشد. در حال ساخت ریپوزیتوری جدید...");
+            await ghApi('/user/repos', token, 'POST', { name: repo, private: isPrivate, auto_init: true });
+            await new Promise(r => setTimeout(r, 2000));
+          } else {
+            throw new Error("ریپوزیتوری وجود ندارد و گزینه ساخت خودکار فعال نیست.");
+          }
+        }
+
+        log("در حال دریافت آخرین Commit شاخه اصلی...");
+        const repoInfo = await ghApi(`/repos/${owner}/${repo}`, token);
+        const defaultBranch = repoInfo.default_branch || 'main';
+        const ref = await ghApi(`/repos/${owner}/${repo}/git/ref/heads/${defaultBranch}`, token);
+        const commit = await ghApi(`/repos/${owner}/${repo}/git/commits/${ref.object.sha}`, token);
+
+        const tree = [];
+        for (const [filePath, content] of Object.entries(extractedFiles)) {
+          log(`در حال آپلود: ${filePath}`);
+          const blob = await ghApi(`/repos/${owner}/${repo}/git/blobs`, token, 'POST', {
+            content: btoa(unescape(encodeURIComponent(content))),
+            encoding: 'base64'
+          });
+          tree.push({ path: filePath, mode: '100644', type: 'blob', sha: blob.sha });
+        }
+
+        log("در حال ثبت Tree و Commit جدید...");
+        const newTree = await ghApi(`/repos/${owner}/${repo}/git/trees`, token, 'POST', {
+          base_tree: commit.tree.sha,
+          tree
+        });
+
+        const newCommit = await ghApi(`/repos/${owner}/${repo}/git/commits`, token, 'POST', {
+          message: 'Deploy via AI-to-GitHub PWA Tool',
+          tree: newTree.sha,
+          parents: [commit.sha]
+        });
+
+        await ghApi(`/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`, token, 'PATCH', {
+          sha: newCommit.sha
+        });
+
+        try {
+          await ghApi(`/repos/${owner}/${repo}/pages`, token, 'POST', {
+            source: { branch: defaultBranch, path: '/' }
+          });
+        } catch (e) { }
+
+        log(`🎉 دپلوی با موفقیت انجام شد!\n\nآدرس پروژه:\n[https://github.com/$](https://github.com/$){owner}/${repo}\n\nآدرس زنده:\nhttps://${owner}.github.io/${repo}/`);
+      } catch (err) {
+        log("❌ خطا در فرآیند دپلوی:\n" + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
+</body>
 </html>

@@ -1,0 +1,16 @@
+{
+  "name": "AI-to-GitHub PWA Deployer",
+  "short_name": "AIDeployer",
+  "description": "Parse AI chatbot outputs and deploy directly to GitHub Pages from mobile devices.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b10",
+  "theme_color": "#070b10",
+  "dir": "auto",
+  "lang": "fa",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
