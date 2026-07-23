@@ -1,26 +1,23 @@
-// src/screens/SettingsScreen.tsx — language, accent, toggles, clear history, about.
+// src/screens/SettingsScreen.tsx — language, accent, toggles, clear THIS session's results (confirm), about.
 import type { Dispatch, SetStateAction } from 'react';
 import { Info, Layers, Settings, Trash2, Zap } from 'lucide-react';
-import { useI18n } from '../i18n';
+import { useI18n, type Lang } from '../i18n';
 import type { Buzz, SettingsState } from '../lib/types';
 import { ACCENTS } from '../lib/constants';
 import { Card, ScreenTitle } from '../components/ui';
 
+const L: Record<Lang, Record<string, string>> = {
+  en: { clearSession: 'Clear this session’s results', clearHint: 'Deletes every result in the active session. Sessions themselves are kept.' },
+  fa: { clearSession: 'پاک کردن نتایج این سشن', clearHint: 'همه‌ی نتایج سشن فعال پاک می‌شوند؛ خود سشن‌ها می‌مانند.' },
+};
+
 function ToggleRow({ label, icon: Icon, checked, onChange }: { label: string; icon: any; checked: boolean; onChange: () => void }) {
-  return (
-    <div className="flex items-center justify-between py-2.5">
-      <div className="flex items-center gap-2.5 text-sm font-bold text-zinc-200"><Icon size={16} className="text-accent" /> {label}</div>
-      <button onClick={onChange} role="switch" aria-checked={checked} className={`relative h-8 w-14 shrink-0 rounded-full transition ${checked ? 'bg-accent shadow-glow' : 'bg-white/10'}`}>
-        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${checked ? 'start-[30px]' : 'start-1'}`} />
-      </button>
-    </div>
-  );
+  return (<div className="flex items-center justify-between py-2.5"><div className="flex items-center gap-2.5 text-sm font-bold text-zinc-200"><Icon size={16} className="text-accent" /> {label}</div><button onClick={onChange} role="switch" aria-checked={checked} className={`relative h-8 w-14 shrink-0 rounded-full transition ${checked ? 'bg-accent shadow-glow' : 'bg-white/10'}`}><span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${checked ? 'start-[30px]' : 'start-1'}`} /></button></div>);
 }
 
-export function SettingsScreen({ settings, setSettings, onClearHistory, buzz }: {
-  settings: SettingsState; setSettings: Dispatch<SetStateAction<SettingsState>>; onClearHistory: () => void; buzz: Buzz;
-}) {
+export function SettingsScreen({ settings, setSettings, onClearHistory, buzz }: { settings: SettingsState; setSettings: Dispatch<SetStateAction<SettingsState>>; onClearHistory: () => void; buzz: Buzz }) {
   const { t, lang, setLang } = useI18n();
+  const tr = (k: string) => L[lang][k] ?? L.en[k] ?? k;
   return (
     <div className="fade-up space-y-4">
       <ScreenTitle icon={Settings} title={t('settingsTitle')} desc={t('appTagline')} />
@@ -48,12 +45,13 @@ export function SettingsScreen({ settings, setSettings, onClearHistory, buzz }: 
         <ToggleRow label={t('haptics')} icon={Zap} checked={settings.haptics} onChange={() => setSettings((s) => ({ ...s, haptics: !s.haptics }))} />
       </Card>
       <Card>
-        <button onClick={() => { buzz(15); onClearHistory(); }} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-400/5 py-3.5 text-sm font-bold text-red-400 transition active:scale-[0.98]"><Trash2 size={16} /> {t('clearHistory')}</button>
+        <button onClick={() => { buzz(15); onClearHistory(); }} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/30 bg-red-400/5 py-3.5 text-sm font-bold text-red-400 transition active:scale-[0.98]"><Trash2 size={16} /> {tr('clearSession')}</button>
+        <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">{tr('clearHint')}</p>
       </Card>
       <Card>
         <div className="flex items-center gap-2 text-sm font-black"><Info size={15} className="text-accent" /> {t('about')}</div>
         <p className="mt-2 text-xs leading-relaxed text-zinc-400">{t('aboutText')}</p>
-        <div className="mt-3 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-[11px] text-zinc-500"><span>{t('version')}</span><span dir="ltr" className="font-bold text-zinc-300">v2.1.0 • modular</span></div>
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-[11px] text-zinc-500"><span>{t('version')}</span><span dir="ltr" className="font-bold text-zinc-300">v3.0.0 • sessions + analytics</span></div>
       </Card>
     </div>
   );

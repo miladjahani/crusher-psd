@@ -1,3 +1,5 @@
+// src/vision-screen.tsx — optical analysis. save() persists image+particles+sieve under active session;
+// send() only shows the chart (no duplicate DB row). Uses shared uid for a stable record id.
 import { useEffect, useRef, useState, type PointerEvent as RPointer } from 'react';
 import { Camera, Save, Trash2, BarChart3, Ruler, RefreshCcw, AlertTriangle, Boxes, ScanLine, Eye, Grid3x3, Square } from 'lucide-react';
 import { useI18n, type Lang } from './i18n';
@@ -5,6 +7,7 @@ import { analyze, imageDataFromImage, makeCalibrationLine, makeCalibrationCircle
 import { edgeDetect, cappedImageBlob, thumbFromImage, type EdgeResult } from './edges';
 import { saveScan, type StoredParticle, type StoredStats, type StoredCalibration } from './db';
 import { computePSD, type PSDResult } from './psd';
+import { uid } from './lib/constants';
 
 type OnResult = (rows: { size: number; weight: number }[], result: PSDResult, source: 'ai' | 'manual', name: string) => void;
 interface Props { showGrid: boolean; onResult: OnResult; buzz: (ms?: number) => void; notify: (msg: string) => void; }
@@ -44,6 +47,7 @@ export default function VisionScreen({ showGrid, onResult, buzz, notify }: Props
   const [minA, setMinA] = useState(40);
   const [sampleName, setSampleName] = useState('');
   const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const accent = (() => { try { return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '0 230 118'; } catch { return '0 230 118'; } })();
   const accentCss = `rgb(${accent})`;
 
@@ -86,28 +90,38 @@ export default function VisionScreen({ showGrid, onResult, buzz, notify }: Props
   function onDown(e: RPointer<HTMLCanvasElement>) { if (calMode === 'numeric') return; (e.target as Element).setPointerCapture?.(e.pointerId); const p = getPos(e); setDrawing(true); if (calMode === 'line') setCalLine([p, p]); else setCalCircle({ c: p, r: 0 }); }
   function onMove(e: RPointer<HTMLCanvasElement>) { if (!drawing) return; const p = getPos(e); if (calMode === 'line') setCalLine((c) => (c ? [c[0], p] : null)); else setCalCircle((c) => (c ? { c: c.c, r: dist(c.c, p) } : null)); }
   function onUp() { if (!drawing) return; setDrawing(false); buzz(10); runEngine(); }
-  function onFile(f?: File) { if (!f) return; const url = URL.createObjectURL(f); const im = new Image(); im.onload = () => { setImgEl(im); setCalLine(null); setCalCircle(null); buzz(12); }; im.src = url; }
-  async function save() {
-    if (!res || !imgEl) return; buzz(15);
+  function onFile(f?: File) { if (!f) return; const url = URL.createObjectURL(f); const im = new Image(); im.onload = () => { setImgEl(im); setCalLine(null); setCalCircle(null); setSavedId(null); buzz(12); }; im.src = url; }
+
+  function buildSieveIfCal(): { size: number; weight: number }[] {
+    if (!res || !res.stats.calibrated) return [];
+    const diams = res.particles.map((p) => p.deqMm).filter((d): d is number => d != null && d > 0);
+    return buildSieveFromDiameters(diams);
+  }
+  async function save(): Promise<string | null> {
+    if (!res || !imgEl) return null; buzz(15);
+    const id = savedId || uid();
     const particles: StoredParticle[] = res.particles.map((p) => ({ id: p.id, areaPx: p.areaPx, aspectRatio: p.aspectRatio, deqPx: p.deqPx, deqMm: p.deqMm, bbox: p.bbox }));
     const stats: StoredStats = { count: res.stats.count, meanDeqMm: res.stats.meanDeqMm, d50MassMm: res.stats.d50MassMm, d50NumberPx: res.stats.d50NumberPx, meanAspectRatio: res.stats.meanAspectRatio, coverage: res.stats.coverage, confidence: res.stats.confidence, confidenceLabel: res.stats.confidenceLabel, calibrated: res.stats.calibrated };
     const calibration: StoredCalibration = { mode: res.calibration.mode, mmPerPx: res.calibration.mmPerPx };
     const thumb = await thumbFromImage(imgEl).catch(() => null);
     const image = await cappedImageBlob(imgEl).catch(() => null);
     const name = sampleName.trim() || `Vision-${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-    await saveScan({ sampleName: name, source: 'vision', calibration, stats, particles, thumbBlob: thumb }, image);
-    setSaved(true); notify(tr('saved'));
+    const sieve = buildSieveIfCal();
+    await saveScan({ id, sampleName: name, source: 'vision', calibration, stats, particles, sieve, thumbBlob: thumb }, image);
+    setSavedId(id); setSaved(true); notify(tr('saved'));
+    return id;
   }
-  function send() {
+  async function send() {
     if (!res) return;
     if (!res.stats.calibrated) return notify(tr('needCal'));
     const diams = res.particles.map((p) => p.deqMm).filter((d): d is number => d != null && d > 0);
     if (diams.length < 3) return notify(tr('needMore'));
+    if (!savedId) await save(); // persist image+particles+sieve first; onResult only shows the chart (no dup row)
     const sieve = buildSieveFromDiameters(diams); const psd = computePSD(sieve);
     if (!psd) return notify(tr('needMore')); buzz(20);
     onResult(sieve, psd, 'ai', sampleName.trim() || `Vision-${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`);
   }
-  function clearAll() { setImgEl(null); setRes(null); setEdge(null); setCalLine(null); setCalCircle(null); setSaved(false); if (fileRef.current) fileRef.current.value = ''; }
+  function clearAll() { setImgEl(null); setRes(null); setEdge(null); setCalLine(null); setCalCircle(null); setSaved(false); setSavedId(null); if (fileRef.current) fileRef.current.value = ''; }
   const s = res?.stats; const cal = res?.calibration;
 
   return (
@@ -195,8 +209,8 @@ export default function VisionScreen({ showGrid, onResult, buzz, notify }: Props
           )}
           <label className="block text-[11px] text-zinc-400">{tr('sample')}<input value={sampleName} onChange={(e) => setSampleName(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-ink-900/60 px-3 text-sm font-bold" /></label>
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={save} disabled={!res} className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border-2 border-[#ffc400]/70 bg-[#ffc400]/10 text-[13px] font-black text-[#ffc400] disabled:opacity-40 active:scale-[0.98]"><Save size={18} />{saved ? tr('saved') : tr('save')}</button>
-            <button onClick={send} disabled={!res} className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-accent text-[13px] font-black text-ink-950 shadow-glow disabled:opacity-40 active:scale-[0.98]"><BarChart3 size={18} />{tr('send')}</button>
+            <button onClick={() => { save(); }} disabled={!res} className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl border-2 border-[#ffc400]/70 bg-[#ffc400]/10 text-[13px] font-black text-[#ffc400] disabled:opacity-40 active:scale-[0.98]"><Save size={18} />{saved ? tr('saved') : tr('save')}</button>
+            <button onClick={() => { send(); }} disabled={!res} className="flex min-h-[54px] items-center justify-center gap-2 rounded-2xl bg-accent text-[13px] font-black text-ink-950 shadow-glow disabled:opacity-40 active:scale-[0.98]"><BarChart3 size={18} />{tr('send')}</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => fileRef.current?.click()} className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs font-bold text-zinc-300 active:scale-95"><RefreshCcw size={14} />{tr('upload')}</button>
